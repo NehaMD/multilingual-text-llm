@@ -1,2 +1,2 @@
-# Multi-lingual Text Generation
+# Multilingual Text Generation
 For AI Project
