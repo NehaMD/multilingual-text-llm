@@ -1,2 +1,2 @@
-# language_translation_llm
-Language Translation LLM for AI project
+# Multi-lingual Text Generation
+For AI Project
