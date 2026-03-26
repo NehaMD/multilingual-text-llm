@@ -12,29 +12,63 @@ NUM_HEADS = 8
 NUM_LAYERS = 4  # New: Number of Transformer blocks
 
 def scaled_dot_product_attention(query, key, value, mask=None):
-    """
-    Computes Scaled Dot-Product Attention.
+    """Computes Scaled Dot-Product Attention.
+
+    Args:
+        query (torch.Tensor): Query tensor of shape [Batch, Heads, SeqLen, HeadDim].
+        key (torch.Tensor): Key tensor of shape [Batch, Heads, SeqLen, HeadDim].
+        value (torch.Tensor): Value tensor of shape [Batch, Heads, SeqLen, HeadDim].
+        mask (torch.Tensor, optional): Mask tensor of shape [Batch, Heads, SeqLen, SeqLen] 
+            or broadcastable. Defaults to None.
+
+    Returns:
+        tuple: (context, attention_weights)
+            context (torch.Tensor): Output tensor of shape [Batch, Heads, SeqLen, HeadDim].
+            attention_weights (torch.Tensor): Attention scores of shape [Batch, Heads, SeqLen, SeqLen].
     """
     d_k = key.shape[-1]
+    
+    # Matrix multiplication of Queries and Keys to compute raw attention scores
     scores = torch.matmul(query, key.transpose(-2, -1))
+    
+    # Scaling the scores by the square root of the head dimension to stabilize gradients
     scaled_scores = scores / math.sqrt(d_k)
     
     if mask is not None:
+        # Apply causal mask by filling future positions with a very large negative value
         # Mask is 0 for positions to be hidden, 1 for visible
         scaled_scores = scaled_scores.masked_fill(mask == 0, -1e9)
     
+    # Applying Softmax to obtain probability distribution (attention weights)
     attention_weights = F.softmax(scaled_scores, dim=-1)
+    
+    # Computing the weighted sum of Values based on attention weights
     context = torch.matmul(attention_weights, value)
     
     return context, attention_weights
 
 class TokenAndPositionEmbedding(nn.Module):
+    """Combines Token Embeddings with Learned Position Embeddings.
+
+    Args:
+        vocab_size (int): Size of the vocabulary.
+        embed_dim (int): Dimension of the embedding space.
+        max_seq_len (int): Maximum sequence length supported by position embeddings.
+    """
     def __init__(self, vocab_size, embed_dim, max_seq_len):
         super().__init__()
         self.token_emb = nn.Embedding(vocab_size, embed_dim)
         self.pos_emb = nn.Embedding(max_seq_len, embed_dim)
         
     def forward(self, x):
+        """Forward pass for Token and Position Embeddings.
+
+        Args:
+            x (torch.Tensor): Input tensor of token indices with shape [Batch, SeqLen].
+
+        Returns:
+            torch.Tensor: Combined embeddings with shape [Batch, SeqLen, EmbedDim].
+        """
         seq_len = x.shape[1]
         tok_emb = self.token_emb(x)
         positions = torch.arange(0, seq_len, dtype=torch.long, device=x.device)
@@ -42,6 +76,12 @@ class TokenAndPositionEmbedding(nn.Module):
         return tok_emb + pos_emb
 
 class MultiHeadAttention(nn.Module):
+    """Implements Multi-Head Causal Self-Attention.
+
+    Args:
+        embed_dim (int): Dimension of the embedding space.
+        num_heads (int): Number of attention heads.
+    """
     def __init__(self, embed_dim, num_heads):
         super().__init__()
         assert embed_dim % num_heads == 0, "EMBED_DIM must be divisible by NUM_HEADS"
@@ -64,32 +104,46 @@ class MultiHeadAttention(nn.Module):
         self.register_buffer("causal_mask", mask.view(1, 1, SEQ_LEN, SEQ_LEN))
         
     def forward(self, x):
+        """Forward pass for Multi-Head Attention.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape [Batch, SeqLen, EmbedDim].
+
+        Returns:
+            torch.Tensor: Output tensor after attention and projection with shape [Batch, SeqLen, EmbedDim].
+        """
         batch_size, seq_len, _ = x.shape
         
-        # 1. Project to Q, K, V
+        # Linear projections to obtain Query, Key, and Value tensors
         q = self.q_linear(x)
         k = self.k_linear(x)
         v = self.v_linear(x)
         
-        # 2. Reshape to [Batch, NumHeads, SeqLen, HeadDim]
+        # Reshaping and transposing to split the embedding dimension into multiple heads
         # view: [B, S, H * D_k] -> [B, S, H, D_k] -> transpose: [B, H, S, D_k]
         q = q.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         k = k.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         v = v.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         
-        # 3. Call scaled_dot_product_attention with causal mask
+        # Scaled dot-product attention with causal mask
         # We slice the causal mask to the current sequence length in case it's smaller than SEQ_LEN
         mask = self.causal_mask[:, :, :seq_len, :seq_len]
         context, _ = scaled_dot_product_attention(q, k, v, mask=mask)
         
-        # 4. Reshape back to [Batch, SeqLen, EmbedDim]
+        # Concatenating the heads back into a single tensor of the original embedding dimension
         # transpose: [B, H, S, D_k] -> [B, S, H, D_k] -> reshape: [B, S, E]
         context = context.transpose(1, 2).contiguous().view(batch_size, seq_len, self.embed_dim)
         
-        # 5. Final linear projection
+        # Final linear projection to mix information across heads
         return self.out_proj(context)
 
 class FeedForward(nn.Module):
+    """Implements the Position-wise Feed-Forward Network.
+
+    Args:
+        embed_dim (int): Dimension of the embedding space.
+        dropout (float, optional): Dropout probability. Defaults to 0.1.
+    """
     def __init__(self, embed_dim, dropout=0.1):
         super().__init__()
         # Expansion factor is typically 4x in Transformers
@@ -101,9 +155,24 @@ class FeedForward(nn.Module):
         )
         
     def forward(self, x):
+        """Forward pass for the Feed-Forward Network.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape [Batch, SeqLen, EmbedDim].
+
+        Returns:
+            torch.Tensor: Output tensor after non-linear transformation with shape [Batch, SeqLen, EmbedDim].
+        """
         return self.net(x)
 
 class TransformerBlock(nn.Module):
+    """Implements a single Transformer Encoder/Decoder Block.
+
+    Args:
+        embed_dim (int): Dimension of the embedding space.
+        num_heads (int): Number of attention heads.
+        dropout (float, optional): Dropout probability. Defaults to 0.1.
+    """
     def __init__(self, embed_dim, num_heads, dropout=0.1):
         super().__init__()
         # Layer Normalization layers
@@ -115,6 +184,14 @@ class TransformerBlock(nn.Module):
         self.ff = FeedForward(embed_dim, dropout)
         
     def forward(self, x):
+        """Forward pass for the Transformer Block.
+
+        Args:
+            x (torch.Tensor): Input tensor of shape [Batch, SeqLen, EmbedDim].
+
+        Returns:
+            torch.Tensor: Output tensor after attention and feed-forward layers with shape [Batch, SeqLen, EmbedDim].
+        """
         # 1. Pre-LayerNorm Attention with Residual Connection
         x = x + self.mha(self.ln1(x))
         
@@ -124,6 +201,16 @@ class TransformerBlock(nn.Module):
         return x
 
 class LanguageModel(nn.Module):
+    """Implements a Decoder-only Transformer Language Model.
+
+    Args:
+        vocab_size (int): Size of the vocabulary.
+        max_seq_len (int): Maximum sequence length.
+        embed_dim (int): Dimension of the embedding space.
+        num_heads (int): Number of attention heads.
+        num_layers (int): Number of Transformer blocks.
+        dropout (float, optional): Dropout probability. Defaults to 0.1.
+    """
     def __init__(self, vocab_size, max_seq_len, embed_dim, num_heads, num_layers, dropout=0.1):
         super().__init__()
         # Initial Embedding layer
@@ -142,6 +229,14 @@ class LanguageModel(nn.Module):
         self.head = nn.Linear(embed_dim, vocab_size)
         
     def forward(self, x):
+        """Forward pass for the Language Model.
+
+        Args:
+            x (torch.Tensor): Input tensor of token indices with shape [Batch, SeqLen].
+
+        Returns:
+            torch.Tensor: Logits for each token in the vocabulary with shape [Batch, SeqLen, VocabSize].
+        """
         # 1. Input IDs -> Embeddings
         x = self.embedding(x)
         
