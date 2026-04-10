@@ -22,9 +22,9 @@ block_size = 128
 # BUG FIX: Vocab Size Mismatch
 # Previously this was set to 32000, which mismatched the tokenizer's 16000 VOCAB_SIZE.
 vocab_size = 16000
-embed_dim = 256
+embed_dim = 512
 num_heads = 8
-num_layers = 4
+num_layers = 8
 
 eval_iters = 100
 

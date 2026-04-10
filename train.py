@@ -30,9 +30,9 @@ checkpoint_interval = 1000
 # Previously this was set to 32000, but the tokenizer was trained with 16000.
 # This caused the model to predict across 16000 'dead' tokens, leading to gibberish.
 vocab_size = 16000  
-embed_dim = 256
+embed_dim = 512
 num_heads = 8
-num_layers = 4
+num_layers = 8
 
 # -----------------------------
 # LOAD TOKENS
