@@ -23,7 +23,7 @@ max_iters = 50000
 eval_interval = 10
 learning_rate = 1e-4
 min_lr = 1e-5        # Learning rate decays down to this value
-warmup_iters = 200   # How many steps to spend warming up
+warmup_iters = 2000   # How many steps to spend warming up
 checkpoint_interval = 1000
 
 # BUG FIX: Vocab Size Mismatch
