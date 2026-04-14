@@ -33,8 +33,8 @@ print(f"Using device: {device}")
 batch_size = 32
 block_size = 128
 vocab_size = 16000
-embed_dim = 512
-num_heads = 8
+embed_dim = 128
+num_heads = 4
 num_layers = 4
 
 eval_iters = 100

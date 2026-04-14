@@ -16,9 +16,9 @@ block_size = 128
 # BUG FIX: Vocab Size Mismatch
 # Updated to match the tokenizer's trained vocab size to prevent out-of-bounds generation errors.
 vocab_size = 16000   # must match tokenizer vocab size
-embed_dim = 512
-num_heads = 8
-num_layers = 8
+embed_dim = 128
+num_heads = 4
+num_layers = 4
 
 # -----------------------------
 # LOAD TOKENIZER
@@ -103,8 +103,8 @@ if __name__ == "__main__":
     print(sp.get_piece_size())
 
     prompts = {
-        "English": "Once upon a time",
-        "Hindi": "एक समय की बात है",
+        "English": "Hello, I was thinking about how technology has changed the way we communicate with each other over the past decade. For example, social media platforms have made it easier to stay connected, but at the same time,",
+        "Hindi": "आज के समय में तकनीक ने हमारे जीवन को बहुत आसान बना दिया है, लेकिन इसके साथ कुछ समस्याएं भी आई हैं। लोग पहले की तरह आमने-सामने बात करने के बजाय मोबाइल और इंटरनेट पर अधिक निर्भर हो गए हैं, जिससे",
     }
 
     model = load_model()
