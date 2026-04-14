@@ -19,20 +19,20 @@ print(f"Using device: {device}")
 # -----------------------------
 batch_size = 32
 block_size = 128
-max_iters = 5000
+max_iters = 50000
 eval_interval = 10
-learning_rate = 2e-4
-min_lr = 2e-5        # Learning rate decays down to this value
+learning_rate = 1e-4
+min_lr = 1e-5        # Learning rate decays down to this value
 warmup_iters = 200   # How many steps to spend warming up
 checkpoint_interval = 1000
 
 # BUG FIX: Vocab Size Mismatch
 # Previously this was set to 32000, but the tokenizer was trained with 16000.
 # This caused the model to predict across 16000 'dead' tokens, leading to gibberish.
-vocab_size = 16000  
-embed_dim = 512
-num_heads = 8
-num_layers = 8
+vocab_size = 8000  
+embed_dim = 128
+num_heads = 4
+num_layers = 4
 
 # -----------------------------
 # LOAD TOKENS

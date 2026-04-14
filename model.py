@@ -6,9 +6,9 @@ import math
 # Configuration variables
 BATCH_SIZE = 32
 SEQ_LEN = 128
-VOCAB_SIZE = 32000
-EMBED_DIM = 256
-NUM_HEADS = 8
+VOCAB_SIZE = 8000
+EMBED_DIM = 128
+NUM_HEADS = 4
 NUM_LAYERS = 4  # New: Number of Transformer blocks
 
 def scaled_dot_product_attention(query, key, value, mask=None):
