@@ -5,7 +5,7 @@ import math
 
 # Configuration variables
 BATCH_SIZE = 32
-SEQ_LEN = 128
+SEQ_LEN = 256
 VOCAB_SIZE = 32000
 EMBED_DIM = 256
 NUM_HEADS = 8

@@ -18,7 +18,7 @@ print(f"Using device: {device}")
 # HYPERPARAMETERS (same as training)
 # -----------------------------
 batch_size = 32
-block_size = 128
+block_size = 256
 # BUG FIX: Vocab Size Mismatch
 # Previously this was set to 32000, which mismatched the tokenizer's 16000 VOCAB_SIZE.
 vocab_size = 16000

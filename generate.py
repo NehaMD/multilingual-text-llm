@@ -12,7 +12,7 @@ print(f"Using device: {device}")
 # -----------------------------
 # HYPERPARAMETERS (MUST match training)
 # -----------------------------
-block_size = 128
+block_size = 256
 # BUG FIX: Vocab Size Mismatch
 # Updated to match the tokenizer's trained vocab size to prevent out-of-bounds generation errors.
 vocab_size = 16000   # must match tokenizer vocab size

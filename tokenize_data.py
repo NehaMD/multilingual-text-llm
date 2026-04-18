@@ -11,7 +11,7 @@ INPUT_DATA = "./data/final_dataset.txt"
 OUTPUT_DIR = "./tokenization"
 MODEL_PREFIX = "tokenizer"
 VOCAB_SIZE = 16000
-SEQ_LEN = 128
+SEQ_LEN = 256
 
 # Create output directory if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)

@@ -18,7 +18,7 @@ print(f"Using device: {device}")
 # HYPERPARAMETERS
 # -----------------------------
 batch_size = 32
-block_size = 128
+block_size = 256
 max_iters = 5000
 eval_interval = 10
 learning_rate = 2e-4
@@ -177,7 +177,7 @@ for step in range(start_step, max_iters):
     # ---- TRAIN STEP ----
     # Determine and set the learning rate for this iteration
     lr = get_lr(step)
-    for param_group in optimizer.param_group:
+    for param_group in optimizer.param_groups:
         param_group['lr'] = lr
 
     x, y = get_batch("train")
