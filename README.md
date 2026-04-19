@@ -119,3 +119,91 @@ python3 generate.py
 # 4. Evaluate exact-token accuracy and Sequence Perplexity formulations
 python3 evaluate.py
 ```
+
+---
+
+## 📊 Interactive Visualization Dashboard
+
+This repository includes a comprehensive Streamlit-based dashboard for exploring and demonstrating the multilingual LLM capabilities.
+
+### Features
+- **Text Generation**: Generate text in English and Hindi with adjustable temperature and top-k sampling
+- **Tokenization Explorer**: Visualize how text is tokenized and understand the BPE process
+- **Model Architecture**: Interactive visualization of the transformer layers and attention mechanisms
+- **Attention Heatmaps**: Visualize attention patterns in the model
+- **Analytics**: Performance metrics and model statistics
+
+### Running the Dashboard
+
+To run the visualization dashboard on your local machine:
+
+1. **Clone the repository**:
+   ```bash
+   git clone <repository-url>
+   cd multilingual-text-llm
+   ```
+
+2. **Set up a Python virtual environment** (recommended):
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements_viz.txt
+   ```
+
+4. **Run the dashboard**:
+   ```bash
+   streamlit run app.py
+   ```
+
+5. **Open your browser** to `http://localhost:8501` to access the dashboard.
+
+### Requirements
+- Python 3.8+
+- The trained model file (`model.pth`) and tokenizer (`tokenizer.model`) are included in the repository
+- For GPU acceleration, ensure PyTorch is installed with CUDA support
+
+### Dashboard Tabs
+1. **Text Generation**: Input prompts and generate multilingual text
+2. **Tokenization**: Explore how the BPE tokenizer processes text
+3. **Architecture**: View the transformer model structure
+4. **Attention**: Analyze attention mechanisms (requires model modifications for full functionality)
+5. **Analytics**: Model performance metrics and statistics
+
+---
+
+## 📋 Requirements & Dependencies
+
+### Core Training Dependencies
+- `torch>=2.0.0` (PyTorch with CUDA support recommended)
+- `sentencepiece` (for BPE tokenization)
+- `numpy` (numerical computations)
+- `tqdm` (progress bars)
+
+### Visualization Dashboard Dependencies
+- `streamlit` (web framework)
+- `plotly` (interactive charts)
+- `torch` (model loading)
+- `sentencepiece` (tokenizer)
+- `numpy` (data processing)
+
+Install all dependencies:
+```bash
+pip install -r requirements.txt  # For training
+pip install -r requirements_viz.txt  # For visualization
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+## 📄 License
+
+This project is open source and available under the [MIT License](LICENSE).
