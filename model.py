@@ -103,14 +103,13 @@ class MultiHeadAttention(nn.Module):
         mask = torch.tril(torch.ones(SEQ_LEN, SEQ_LEN))
         self.register_buffer("causal_mask", mask.view(1, 1, SEQ_LEN, SEQ_LEN))
         
-    def forward(self, x):
-        """Forward pass for Multi-Head Attention.
-
+    def forward(self, x, return_attention=False):
+        """Forward pass for MultiHeadAttention.
         Args:
             x (torch.Tensor): Input tensor of shape [Batch, SeqLen, EmbedDim].
-
+            return_attention (bool): If True, returns (output, attention_weights).
         Returns:
-            torch.Tensor: Output tensor after attention and projection with shape [Batch, SeqLen, EmbedDim].
+            torch.Tensor or tuple: Output tensor or (output, attention_weights).
         """
         batch_size, seq_len, _ = x.shape
         
@@ -120,22 +119,23 @@ class MultiHeadAttention(nn.Module):
         v = self.v_linear(x)
         
         # Reshaping and transposing to split the embedding dimension into multiple heads
-        # view: [B, S, H * D_k] -> [B, S, H, D_k] -> transpose: [B, H, S, D_k]
         q = q.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         k = k.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         v = v.view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
         
         # Scaled dot-product attention with causal mask
-        # We slice the causal mask to the current sequence length in case it's smaller than SEQ_LEN
         mask = self.causal_mask[:, :, :seq_len, :seq_len]
-        context, _ = scaled_dot_product_attention(q, k, v, mask=mask)
+        context, attention_weights = scaled_dot_product_attention(q, k, v, mask=mask)
         
-        # Concatenating the heads back into a single tensor of the original embedding dimension
-        # transpose: [B, H, S, D_k] -> [B, S, H, D_k] -> reshape: [B, S, E]
+        # Concatenating the heads back into a single tensor
         context = context.transpose(1, 2).contiguous().view(batch_size, seq_len, self.embed_dim)
         
-        # Final linear projection to mix information across heads
-        return self.out_proj(context)
+        # Final linear projection
+        output = self.out_proj(context)
+
+        if return_attention:
+            return output, attention_weights
+        return output
 
 class FeedForward(nn.Module):
     """Implements the Position-wise Feed-Forward Network.
@@ -183,21 +183,25 @@ class TransformerBlock(nn.Module):
         self.mha = MultiHeadAttention(embed_dim, num_heads)
         self.ff = FeedForward(embed_dim, dropout)
         
-    def forward(self, x):
+    def forward(self, x, return_attention=False):
         """Forward pass for the Transformer Block.
-
         Args:
             x (torch.Tensor): Input tensor of shape [Batch, SeqLen, EmbedDim].
-
-        Returns:
-            torch.Tensor: Output tensor after attention and feed-forward layers with shape [Batch, SeqLen, EmbedDim].
+            return_attention (bool): If True, also returns attention weights.
         """
         # 1. Pre-LayerNorm Attention with Residual Connection
-        x = x + self.mha(self.ln1(x))
+        ln_x = self.ln1(x)
+        if return_attention:
+            attn_out, attn_weights = self.mha(ln_x, return_attention=True)
+            x = x + attn_out
+        else:
+            x = x + self.mha(ln_x)
         
         # 2. Pre-LayerNorm Feed-Forward with Residual Connection
         x = x + self.ff(self.ln2(x))
         
+        if return_attention:
+            return x, attn_weights
         return x
 
 class LanguageModel(nn.Module):
@@ -228,29 +232,48 @@ class LanguageModel(nn.Module):
         # Linear classification head (logits)
         self.head = nn.Linear(embed_dim, vocab_size)
         
-    def forward(self, x):
+    def forward(self, x, return_attention=False):
         """Forward pass for the Language Model.
-
         Args:
-            x (torch.Tensor): Input tensor of token indices with shape [Batch, SeqLen].
-
-        Returns:
-            torch.Tensor: Logits for each token in the vocabulary with shape [Batch, SeqLen, VocabSize].
+            x (torch.Tensor): Input tensor of token indices.
+            return_attention (bool): If True, returns (logits, all_attentions).
         """
+        all_attentions = []
+        
         # 1. Input IDs -> Embeddings
         x = self.embedding(x)
         
-        # 2. Pass through Transformer blocks sequentially
+        # 2. Pass through Transformer blocks
         for block in self.blocks:
-            x = block(x)
+            if return_attention:
+                x, attn = block(x, return_attention=True)
+                all_attentions.append(attn)
+            else:
+                x = block(x)
             
         # 3. Final normalization
         x = self.ln_f(x)
         
-        # 4. Final classification head to produce logits
+        # 4. Final classification head
         logits = self.head(x)
         
+        if return_attention:
+            return logits, all_attentions
         return logits
+
+    @torch.no_grad()
+    def get_embeddings(self, x):
+        """Extracts latent representations from the final Transformer block.
+        Args:
+            x (torch.Tensor): Input token indices [Batch, SeqLen].
+        Returns:
+            torch.Tensor: Latent embeddings [Batch, SeqLen, EmbedDim].
+        """
+        x = self.embedding(x)
+        for block in self.blocks:
+            x = block(x)
+        x = self.ln_f(x)
+        return x
 
 if __name__ == "__main__":
     # 1. Generate dummy input and target data
