@@ -94,9 +94,6 @@ def generate_text(prompt, max_new_tokens=100, temperature=0.8):
 
     return decode(output_tokens)
 
-# -----------------------------
-# EXAMPLE USAGE
-# -----------------------------
 if __name__ == "__main__":
     print("\n--- TEXT GENERATION ---\n")
 
@@ -110,7 +107,7 @@ if __name__ == "__main__":
     model = load_model()
 
     for lang, prompt in prompts.items():
-        tokens = encode(prompt)
+        tokens = encode(prompt)     
         output_tokens = generate(model, tokens, max_new_tokens=100, temperature=0.8)
         text = decode(output_tokens)
 
