@@ -4,7 +4,7 @@ A professional, ground-up implementation of a Decoder-only Transformer architect
 
 ---
 
-## 🚀 Architectural Overview
+## Architectural Overview
 
 This model implements an **Autoregressive Large Language Model (LLM)** patterned after the core architecture introduced in *Attention Is All You Need* (Vaswani et al.) and refined in GPT-style architectures (using Pre-LayerNorm configurations). It is designed to model the probability distribution over a sequence of tokens natively across language barriers.
 
@@ -21,7 +21,7 @@ This model implements an **Autoregressive Large Language Model (LLM)** patterned
 
 ---
 
-## 🧠 System Architecture & Data Flow
+## System Architecture & Data Flow
 
 ```mermaid
 graph TD
@@ -62,7 +62,7 @@ The network utilizes a **Pre-LayerNorm** (Pre-LN) pathway instead of the origina
 
 ---
 
-## ⚙️ Mathematical Parameter Breakdown
+## Mathematical Parameter Breakdown
 
 To understand the computational footprint, the parameter distribution is roughly modeled as follows:
 - **Embedding Spaces**: $16,000 \times 512$ (Tokens) $+ 128 \times 512$ (Positions) $\approx 8.25M$
@@ -75,7 +75,7 @@ To understand the computational footprint, the parameter distribution is roughly
 
 ---
 
-## 🔬 Training Dynamics & Optimization
+##  Training Dynamics & Optimization
 
 The model employs high-grade optimizations standard in massive-scale pre-training.
 
@@ -92,7 +92,7 @@ The model employs high-grade optimizations standard in massive-scale pre-trainin
 
 ---
 
-## 🎲 Inference & Decoding Pipeline
+##  Inference & Decoding Pipeline
 
 Text generation natively operates via stochastic sampling with temperature distribution adjustments:
 $$ p_i = \frac{\exp(z_i / T)}{\sum \exp(z_j / T)} $$
@@ -102,7 +102,7 @@ Additionally, we deploy **Top-K Truncation** (default $K=40$). Rather than compu
 
 ---
 
-## 🛠️ Pipeline & Execution Guide
+##  Pipeline & Execution Guide
 
 The workflow relies strictly on standard PyTorch without distributed abstractions for ease of modular testing:
 
